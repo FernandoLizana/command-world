@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}Misiones{% endblock %}
+{% block content %}
+<div class="page">
+  <div class="kicker">Tablero táctico</div>
+  <h1>Misiones</h1>
+  <div class="row g-4">
+    <div class="col-lg-8">
+      {% for m in missions %}
+        <div class="quest mb-3">
+          <div class="kicker">⚔ {{ m.type_meta.label }} · {{ m.project.name }}</div>
+          <h3 class="display" style="font-size:16px">{{ m.title }}</h3>
+          <p class="muted">{{ m.description }}</p>
+          <div class="meta-row">Prioridad {{ m.priority }} · {{ m.estimated_hours }} h · {{ m.xp_reward }} XP · {{ m.progress }}%</div>
+          <div class="track mt-2"><i style="width:{{ m.progress }}%"></i></div>
+          <ul class="obj">
+            {% for o in m.objectives %}
+              <li>
+                <form method="post" action="{{ url_for('missions.toggle_objective', mission_id=m.id, obj_id=o.id) }}" class="d-inline">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <button class="btn ghost" type="submit">{% if o.completed %}☑{% else %}☐{% endif %} {{ o.description }}</button>
+                </form>
+              </li>
+            {% endfor %}
+          </ul>
+          {% if m.status != 'DONE' %}
+          <form method="post" action="{{ url_for('missions.complete', mission_id=m.id) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button class="btn solid" type="submit">Completar misión</button>
+          </form>
+          {% endif %}
+        </div>
+      {% else %}
+        <p class="muted">No hay misiones abiertas.</p>
+      {% endfor %}
+    </div>
+    <div class="col-lg-4">
+      <div class="panel">
+        <div class="kicker">Nueva misión</div>
+        <form method="post" action="{{ url_for('missions.create_mission') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <label class="field">Título <input name="title" required></label>
+          <label class="field">Territorio
+            <select name="project_id">
+              {% for p in projects %}<option value="{{ p.id }}">{{ p.name }}</option>{% endfor %}
+            </select>
+          </label>
+          <label class="field">Tipo
+            <select name="type">{% for t in types %}<option>{{ t }}</option>{% endfor %}</select>
+          </label>
+          <label class="field">Prioridad <input type="number" name="priority" value="3" min="1" max="5"></label>
+          <label class="field">XP <input type="number" name="xp_reward" value="25"></label>
+          <label class="field">Horas <input type="number" step="0.5" name="estimated_hours" value="2"></label>
+          <label class="field">Vence <input type="date" name="due_date"></label>
+          <label class="field">Descripción <textarea name="description" rows="2"></textarea></label>
+          <label class="field">Objetivos (un renglón cada uno) <textarea name="objectives" rows="4" placeholder="Preparar demo"></textarea></label>
+          <button class="btn solid mt-2" type="submit">Desplegar</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

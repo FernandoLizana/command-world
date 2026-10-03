@@ -1,0 +1,294 @@
+{% extends "base.html" %}
+{% block title %}Mapa{% endblock %}
+{% block content %}
+<div class="map-layout world-map">
+  <div class="map-stage">
+    <div class="map-toolbar">
+      <button class="btn" type="button" id="map-zoom-in">+</button>
+      <button class="btn" type="button" id="map-zoom-out">−</button>
+      <button class="btn" type="button" id="map-center">Centrar</button>
+    </div>
+    <div id="empire-map" data-map-url="{{ url_for('api.map_data') }}" data-csrf="{{ csrf_token() }}">
+      <p class="map-boot">Cargando el mundo…</p>
+    </div>
+  </div>
+</div>
+
+<aside id="city-panel" class="xcom-panel" hidden>
+  <button type="button" class="xcom-close" id="cp-close" aria-label="Cerrar">×</button>
+  <div class="kicker" id="cp-status">Territorio</div>
+  <h2 class="display" id="cp-name">—</h2>
+  <dl class="xcom-stats">
+    <div><dt>Estado</dt><dd id="cp-status-val">—</dd></div>
+    <div>
+      <dt>Progreso</dt>
+      <dd>
+        <div class="track green"><i id="cp-progress-bar" style="width:0"></i></div>
+        <span id="cp-progress">0%</span>
+      </dd>
+    </div>
+    <div>
+      <dt>Salud</dt>
+      <dd>
+        <div class="track cyan"><i id="cp-health-bar" style="width:0"></i></div>
+        <span id="cp-health">0%</span>
+      </dd>
+    </div>
+    <div><dt>Prioridad</dt><dd id="cp-priority">—</dd></div>
+  </dl>
+  <div id="cp-details" class="xcom-details" hidden></div>
+  <div class="xcom-actions">
+    <button class="btn solid" type="button" id="cp-continue">Continuar</button>
+    <button class="btn" type="button" id="cp-mission">Ver misión</button>
+    <button class="btn" type="button" id="cp-talk">Hablar con IA</button>
+    <button class="btn ghost" type="button" id="cp-detail">Detalles</button>
+  </div>
+</aside>
+
+<section class="overlay" id="overlay-misiones" hidden>
+  <div class="overlay-card">
+    <header>
+      <div>
+        <div class="kicker">Misiones</div>
+        <h2 class="display">Órdenes activas</h2>
+      </div>
+      <button type="button" class="xcom-close" data-close-overlay>×</button>
+    </header>
+    <div id="missions-list" class="overlay-list">Cargando…</div>
+  </div>
+</section>
+
+<section class="overlay" id="overlay-ia" hidden>
+  <div class="overlay-card">
+    <header>
+      <div>
+        <div class="kicker">Centro de mando</div>
+        <h2 class="display">Asesor IA</h2>
+      </div>
+      <button type="button" class="xcom-close" data-close-overlay>×</button>
+    </header>
+    <p class="muted">La IA recomienda. Tú decides.</p>
+    <div class="ia-presets">
+      <button class="btn" type="button" data-ask="¿Qué hago ahora?">¿Qué hago ahora?</button>
+      <button class="btn" type="button" data-ask="Divide el objetivo actual en tres pasos">Partir en pasos</button>
+      <button class="btn" type="button" data-ask="Resume el estado de los proyectos">Resumen</button>
+      <button class="btn" type="button" data-ask="¿Qué está bloqueado?">¿Qué está bloqueado?</button>
+      <button class="btn" type="button" data-ask="Prepara un borrador de seguimiento comercial">Borrador comercial</button>
+    </div>
+    <div id="ia-answer" class="ia-answer">Elige una pregunta.</div>
+    <div class="row-actions">
+      <button class="btn solid" type="button" id="ia-create" hidden>Crear misión</button>
+    </div>
+  </div>
+</section>
+
+<section class="overlay" id="overlay-historial" hidden>
+  <div class="overlay-card">
+    <header>
+      <div>
+        <div class="kicker">Crónica</div>
+        <h2 class="display">Historial</h2>
+      </div>
+      <button type="button" class="xcom-close" data-close-overlay>×</button>
+    </header>
+    <div id="history-list" class="overlay-list">Cargando…</div>
+  </div>
+</section>
+
+<section class="overlay" id="overlay-mission-brief" hidden>
+  <div class="overlay-card overlay-narrow">
+    <header>
+      <div>
+        <div class="kicker">Misión</div>
+        <h2 class="display" id="brief-title">—</h2>
+      </div>
+      <button type="button" class="xcom-close" data-close-overlay>×</button>
+    </header>
+    <p class="muted" id="brief-project"></p>
+    <ul class="obj" id="brief-objectives"></ul>
+    <p class="muted" id="brief-reward"></p>
+    <div class="row-actions">
+      <button class="btn solid" type="button" id="brief-continue">Continuar</button>
+    </div>
+  </div>
+</section>
+
+<section class="overlay" id="overlay-onboarding" hidden>
+  <div class="overlay-card">
+    <header>
+      <div>
+        <div class="kicker">Inicio</div>
+        <h2 class="display">Tu mundo</h2>
+      </div>
+    </header>
+    <p>Un <b>edificio</b> es un proyecto. Una <b>misión</b> es una tarea. Un <b>mercader</b> es una oportunidad comercial.</p>
+    <form id="onboard-form" class="form-grid">
+      <label class="field">Nombre del espacio <input name="name" value="Mi mundo" required></label>
+      <label class="field">Uso
+        <select name="usage_type">
+          <option value="business">Emprendimiento</option>
+          <option value="freelance">Servicios freelance</option>
+          <option value="personal">Proyectos personales</option>
+          <option value="mix" selected>Combinación</option>
+        </select>
+      </label>
+      <label class="field">Zona horaria <input name="timezone" value="UTC"></label>
+      <label class="field">Moneda <input name="currency" value="USD" maxlength="8"></label>
+      <label class="field">Minutos por semana (opcional) <input name="weekly_minutes" type="number" min="0" placeholder="Sin definir"></label>
+      <label class="field">Primer proyecto <input name="first_project" placeholder="Ej. Estudio de diseño"></label>
+      <label class="field">Primera acción <input name="first_action" placeholder="Ej. Escribir la oferta"></label>
+    </form>
+    <p class="muted">Puedes omitir y completar esto después en Ajustes. La demostración usa datos ficticios y no borra tu trabajo real.</p>
+    <div class="row-actions">
+      <button class="btn solid" type="button" id="onboard-empty">Comenzar vacío</button>
+      <button class="btn" type="button" id="onboard-demo">Explorar demostración</button>
+      <button class="btn ghost" type="button" id="onboard-skip">Omitir</button>
+    </div>
+  </div>
+</section>
+
+<section class="overlay" id="overlay-hoy" hidden>
+  <div class="overlay-card">
+    <header>
+      <div>
+        <div class="kicker">Turno diario</div>
+        <h2 class="display">Mi turno de hoy</h2>
+      </div>
+      <button type="button" class="xcom-close" data-close-overlay>×</button>
+    </header>
+    <p class="muted">Hasta tres acciones que caben en el tiempo que tienes. Sin IA.</p>
+    <div class="ia-presets" id="today-budgets">
+      <button class="btn" type="button" data-min="15">15 min</button>
+      <button class="btn" type="button" data-min="30">30 min</button>
+      <button class="btn" type="button" data-min="60">60 min</button>
+      <button class="btn" type="button" data-min="120">120 min</button>
+    </div>
+    <div id="today-body">Elige un presupuesto de tiempo.</div>
+    <div class="row-actions">
+      <button class="btn solid" type="button" id="today-accept">Aceptar turno</button>
+    </div>
+  </div>
+</section>
+
+<section class="overlay" id="overlay-captura" hidden>
+  <div class="overlay-card overlay-narrow">
+    <header>
+      <div>
+        <div class="kicker">Bandeja</div>
+        <h2 class="display">Captura rápida</h2>
+      </div>
+      <button type="button" class="xcom-close" data-close-overlay>×</button>
+    </header>
+    <label class="field">Una frase basta
+      <textarea id="capture-text" rows="3" placeholder="Idea, pendiente, nombre de un contacto…"></textarea>
+    </label>
+    <button class="btn solid" type="button" id="capture-save">Guardar</button>
+    <div id="capture-list" class="overlay-list mt-3"></div>
+  </div>
+</section>
+
+<section class="overlay" id="overlay-lista" hidden>
+  <div class="overlay-card">
+    <header>
+      <div>
+        <div class="kicker">Agenda</div>
+        <h2 class="display">Lista</h2>
+      </div>
+      <button type="button" class="xcom-close" data-close-overlay>×</button>
+    </header>
+    <p class="muted">Los mismos proyectos y misiones que el mapa. Utilizable con teclado.</p>
+    <input id="search-q" placeholder="Buscar proyectos, misiones, oportunidades">
+    <div id="search-hits" class="overlay-list"></div>
+    <div id="list-body" class="overlay-list">Cargando…</div>
+  </div>
+</section>
+
+<section class="overlay" id="overlay-finanzas" hidden>
+  <div class="overlay-card">
+    <header>
+      <div>
+        <div class="kicker">Caja simple</div>
+        <h2 class="display">Finanzas</h2>
+      </div>
+      <button type="button" class="xcom-close" data-close-overlay>×</button>
+    </header>
+    <p class="muted">Movimientos que registras tú. No es saldo bancario ni declaración tributaria.</p>
+    <div id="money-totals"></div>
+    <form id="money-form" class="form-grid">
+      <label class="field">Concepto <input name="concept" required></label>
+      <label class="field">Importe <input name="amount" type="number" step="0.01" required></label>
+      <label class="field">Tipo
+        <select name="direction"><option value="in">Cobro / ingreso</option><option value="out">Pago / gasto</option></select>
+      </label>
+      <label class="field">Estado
+        <select name="status"><option value="settled">Efectivo</option><option value="pending">Pendiente</option></select>
+      </label>
+    </form>
+    <button class="btn solid" type="button" id="money-save">Registrar</button>
+    <div id="money-list" class="overlay-list mt-3"></div>
+  </div>
+</section>
+
+<section class="overlay" id="overlay-revision" hidden role="dialog" aria-modal="true" aria-labelledby="week-title">
+  <div class="overlay-card">
+    <header>
+      <div>
+        <div class="kicker">Semana</div>
+        <h2 class="display" id="week-title">Revisión semanal</h2>
+      </div>
+      <button type="button" class="xcom-close" data-close-overlay aria-label="Cerrar">×</button>
+    </header>
+    <p class="muted">Compara lo previsto con lo hecho. No inventa horas ni cobros.</p>
+    <div id="week-body">Cargando…</div>
+    <label class="field">Qué funcionó <textarea id="week-worked" rows="2"></textarea></label>
+    <label class="field">Qué se aprendió <textarea id="week-learned" rows="2"></textarea></label>
+    <label class="field">Qué cambiarás <textarea id="week-change" rows="2"></textarea></label>
+    <div class="row-actions">
+      <button class="btn solid" type="button" id="week-save">Guardar revisión</button>
+    </div>
+  </div>
+</section>
+
+<section class="overlay" id="overlay-tablero" hidden>
+  <div class="overlay-card overlay-wide">
+    <header>
+      <div>
+        <div class="kicker">Órdenes</div>
+        <h2 class="display">Tablero</h2>
+      </div>
+      <button type="button" class="xcom-close" data-close-overlay>×</button>
+    </header>
+    <p class="muted" id="board-wip">Las mismas misiones que el mapa. Arrastra o usa los botones para cambiar de estado.</p>
+    <div id="board-watch" class="overlay-list"></div>
+    <div id="board-grid" class="board-grid">Cargando…</div>
+    <div id="board-queues" class="overlay-list mt-3"></div>
+  </div>
+</section>
+
+<section class="overlay" id="overlay-bitacora" hidden>
+  <div class="overlay-card">
+    <header>
+      <div>
+        <div class="kicker">Acciones reales</div>
+        <h2 class="display">Bitácora</h2>
+      </div>
+      <button type="button" class="xcom-close" data-close-overlay>×</button>
+    </header>
+    <p class="muted">Escribe lo que hiciste o decidiste. Guardar no completa tareas ni registra dinero. Revisa la propuesta antes de aplicar.</p>
+    <label class="field">Qué ocurrió
+      <textarea id="journal-text" rows="3" placeholder="Ej. Avancé treinta minutos en el catálogo. Todavía no lo terminé."></textarea>
+    </label>
+    <button class="btn solid" type="button" id="journal-save">Interpretar</button>
+    <div id="journal-proposal" class="overlay-list mt-3"></div>
+    <div id="journal-list" class="overlay-list mt-3"></div>
+  </div>
+</section>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='game/js/phaser.min.js') }}"></script>
+<script src="{{ url_for('static', filename='game/js/asset_manager.js') }}"></script>
+<script src="{{ url_for('static', filename='game/js/sprite_manager.js') }}"></script>
+<script src="{{ url_for('static', filename='game/js/sound_manager.js') }}"></script>
+<script src="{{ url_for('static', filename='game/js/empire-map.js') }}"></script>
+<script src="{{ url_for('static', filename='js/world.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}{{ project.name }} · ciudad{% endblock %}
+{% block content %}
+<div class="map-layout">
+  <div class="map-stage">
+    <div class="map-toolbar">
+      <a class="btn" href="{{ url_for('main.map_view') }}">← Imperio</a>
+      <a class="btn" href="{{ url_for('projects.detail', slug=project.slug) }}">Ficha</a>
+    </div>
+    <div id="city-map" data-city-url="{{ url_for('api.project_city', slug=project.slug) }}"></div>
+  </div>
+  <aside class="map-side">
+    <div class="kicker">{{ project.status_meta.label }}</div>
+    <h1 class="display" style="font-size:20px">{{ project.name }}</h1>
+    <p class="muted">Mini ciudad según módulos reales. Clic en un edificio para ver su rol.</p>
+    <div class="metric"><label>Salud <span>{{ project.health }}%</span></label><div class="track green"><i style="width:{{ project.health }}%"></i></div></div>
+    <div class="metric"><label>Momentum <span>{{ project.momentum }}%</span></label><div class="track cyan"><i style="width:{{ project.momentum }}%"></i></div></div>
+    <div class="kicker mt-3">Módulos</div>
+    {% for m in modules %}
+      <div class="event-item"><b>{{ m.label }}</b> · {{ m.hint }}</div>
+    {% endfor %}
+    <p id="module-info" class="muted mt-2"></p>
+  </aside>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='game/js/phaser.min.js') }}"></script>
+<script src="{{ url_for('static', filename='game/js/asset_manager.js') }}"></script>
+<script src="{{ url_for('static', filename='game/js/sprite_manager.js') }}"></script>
+<script src="{{ url_for('static', filename='game/js/sound_manager.js') }}"></script>
+<script src="{{ url_for('static', filename='game/js/city-map.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}Cementerio{% endblock %}
+{% block content %}
+<div class="page">
+  <div class="kicker">Pausados, bloqueados, archivados</div>
+  <h1>Cementerio de proyectos</h1>
+  <p class="muted">Nada se archiva solo. El consejero puede sugerir congelar; tú decides.</p>
+  <div class="grid-cards mb-4">
+    {% for p in parked %}
+      <a class="city-card" href="{{ url_for('projects.detail', slug=p.slug) }}">
+        <div class="badge" style="color:{{ p.status_meta.color }}">{{ p.status_meta.dot }} {{ p.status_meta.label }}</div>
+        <h3>{{ p.name }}</h3>
+        <div class="muted">Momentum {{ p.momentum }}% · última actividad {{ p.last_activity.strftime('%d %b') if p.last_activity else '—' }}</div>
+      </a>
+    {% else %}
+      <p class="muted">Ningún territorio en el cementerio.</p>
+    {% endfor %}
+  </div>
+  <div class="panel mb-3">
+    <div class="kicker">La IA sugiere congelar (no ejecutado)</div>
+    {% for f in freeze %}
+      <div class="event-item"><b>{{ f.project }}</b> — {{ f.reason }}</div>
+    {% else %}
+      <p class="muted">Ningún candidato claro ahora.</p>
+    {% endfor %}
+  </div>
+  <div class="panel">
+    <div class="kicker">Activos con bajo pulso</div>
+    {% for p in neglected %}
+      <div class="event-item"><a href="{{ url_for('projects.detail', slug=p.slug) }}">{{ p.name }}</a> · momentum {{ p.momentum }}%</div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

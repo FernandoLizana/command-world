@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}{% if project %}Editar{% else %}Fundar{% endif %}{% endblock %}
+{% block content %}
+<div class="page">
+  <div class="kicker">Territorio</div>
+  <h1>{% if project %}Reformar {{ project.name }}{% else %}Fundar ciudad{% endif %}</h1>
+  <form method="post" class="panel">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="form-grid">
+      <label class="field">Nombre <input name="name" required value="{{ project.name if project else '' }}"></label>
+      <label class="field">Categoría <input name="category" value="{{ project.category if project else 'general' }}"></label>
+      <label class="field">Estado
+        <select name="status">
+          {% for s in statuses %}
+            <option value="{{ s }}" {% if project and project.status == s %}selected{% endif %}>{{ s }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <label class="field">Edificio
+        <select name="building_type">
+          {% for b in building_types %}
+            <option value="{{ b }}" {% if project and project.building_type == b %}selected{% endif %}>{{ b }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <label class="field">Color <input name="color_theme" value="{{ project.color_theme if project else '#c9a227' }}"></label>
+      <label class="field">Icono FA <input name="icon" value="{{ project.icon if project else 'fa-chess-rook' }}"></label>
+      <label class="field">Nivel <input type="number" name="level" min="0" max="5" value="{{ project.level if project else 0 }}"></label>
+      <label class="field">Prioridad (1 alta) <input type="number" name="priority" min="1" max="5" value="{{ project.priority if project else 3 }}"></label>
+      <label class="field">Salud <input type="number" name="health" min="0" max="100" value="{{ project.health if project else 70 }}"></label>
+      <label class="field">Producto <input type="number" name="product_score" min="0" max="100" value="{{ project.product_score if project else 40 }}"></label>
+      <label class="field">Tecnología <input type="number" name="technology_score" min="0" max="100" value="{{ project.technology_score if project else 40 }}"></label>
+      <label class="field">Ventas <input type="number" name="sales_score" min="0" max="100" value="{{ project.sales_score if project else 20 }}"></label>
+      <label class="field">Marketing <input type="number" name="marketing_score" min="0" max="100" value="{{ project.marketing_score if project else 20 }}"></label>
+      <label class="field">Finanzas <input type="number" name="finance_score" min="0" max="100" value="{{ project.finance_score if project else 20 }}"></label>
+      <label class="field">Estabilidad <input type="number" name="stability_score" min="0" max="100" value="{{ project.stability_score if project else 50 }}"></label>
+      <label class="field">Ingresos <input type="number" name="revenue" value="{{ project.revenue if project else 0 }}"></label>
+      <label class="field">MRR <input type="number" name="monthly_revenue" value="{{ project.monthly_revenue if project else 0 }}"></label>
+      <label class="field">Potencial <input type="number" name="potential_revenue" value="{{ project.potential_revenue if project else 0 }}"></label>
+      <label class="field">Horas <input type="number" name="hours_invested" value="{{ project.hours_invested if project else 0 }}"></label>
+      <label class="field">Mapa X <input type="number" name="map_x" value="{{ project.map_x if project else 800 }}"></label>
+      <label class="field">Mapa Y <input type="number" name="map_y" value="{{ project.map_y if project else 400 }}"></label>
+    </div>
+    <label class="field mt-3">Descripción
+      <textarea name="description" rows="4">{{ project.description if project else '' }}</textarea>
+    </label>
+    <div class="row-actions">
+      <button class="btn solid" type="submit">Guardar</button>
+      <a class="btn ghost" href="{{ url_for('projects.list_projects') }}">Cancelar</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

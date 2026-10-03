@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Árbol tecnológico{% endblock %}
+{% block content %}
+<div class="page">
+  <div class="kicker">Capacidades del ecosistema</div>
+  <h1>Árbol tecnológico</h1>
+  <div class="row g-4">
+    {% for category, nodes in grouped.items() %}
+      <div class="col-md-4">
+        <div class="kicker">{{ category }}</div>
+        <div class="tech-col">
+          {% for t in nodes %}
+            <div class="tech-node {{ t.status }}">
+              <b>{{ t.name }}</b>
+              <div class="muted">{{ t.status }} · {{ t.progress }}% · {{ t.xp_reward }} XP</div>
+              <p>{{ t.description }}</p>
+              <form method="post" action="{{ url_for('tech.set_status', tech_id=t.id) }}" class="row-actions">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                {% for s in statuses %}
+                  <button class="btn ghost" name="status" value="{{ s }}" type="submit">{{ s }}</button>
+                {% endfor %}
+              </form>
+            </div>
+            {% if not loop.last %}<div class="tech-arrow">↓</div>{% endif %}
+          {% endfor %}
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

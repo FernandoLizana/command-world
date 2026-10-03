@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+{% block title %}Ajustes{% endblock %}
+{% block content %}
+<div class="page">
+  <div class="kicker">Recursos y reglas</div>
+  <h1>Configuración del imperio</h1>
+  <form method="post" class="panel mb-4">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="form-grid">
+      <label class="field">Nombre <input name="name" value="{{ empire.name }}"></label>
+      <label class="field">Dinero <input type="number" name="money" value="{{ empire.money }}"></label>
+      <label class="field">Horas disponibles <input type="number" step="0.5" name="available_hours" value="{{ empire.available_hours }}"></label>
+      <label class="field">Nivel general <input type="number" name="level" value="{{ empire.level }}"></label>
+    </div>
+    <hr class="rule">
+    <div class="kicker">XP por acción</div>
+    <div class="form-grid">
+      {% for key, val in xp.items() %}
+        <label class="field">{{ key }} <input type="number" name="xp_{{ key }}" value="{{ val }}"></label>
+      {% endfor %}
+    </div>
+    <hr class="rule">
+    <div class="kicker">Mapa</div>
+    <label class="field"><input type="checkbox" name="day_night" {% if visual.day_night %}checked{% endif %}> Ciclo día / noche (botón Noche en el mapa)</label>
+    <label class="field"><input type="checkbox" name="fog" {% if visual.fog %}checked{% endif %}> Niebla conceptual (ideas / mercados no explorados)</label>
+    <label class="field"><input type="checkbox" name="sound_enabled" {% if visual.sound_enabled %}checked{% endif %}> Sonido (preparado, silencioso hasta que existan archivos)</label>
+    <p class="muted mt-2">El tilemap se edita en Tiled (`static/game/maps/empire_map.json`). Los proyectos viven en la base de datos, no en el mapa.</p>
+    <hr class="rule">
+    <div class="kicker">Tu mundo</div>
+    <div class="form-grid">
+      <label class="field">Zona horaria <input name="timezone" value="{{ world.timezone }}"></label>
+      <label class="field">Moneda <input name="currency" value="{{ world.currency }}" maxlength="8"></label>
+      <label class="field">Minutos semanales <input type="number" name="weekly_minutes" value="{{ world.weekly_minutes or '' }}" placeholder="Sin definir"></label>
+      <label class="field">Uso
+        <select name="usage_type">
+          <option value="business" {% if world.usage_type == 'business' %}selected{% endif %}>Emprendimiento</option>
+          <option value="freelance" {% if world.usage_type == 'freelance' %}selected{% endif %}>Freelance</option>
+          <option value="personal" {% if world.usage_type == 'personal' %}selected{% endif %}>Personal</option>
+          <option value="mix" {% if world.usage_type == 'mix' %}selected{% endif %}>Combinación</option>
+        </select>
+      </label>
+      <label class="field">Gamificación
+        <select name="gamification">
+          <option value="playful" {% if world.gamification == 'playful' %}selected{% endif %}>Lúdico</option>
+          <option value="balanced" {% if world.gamification == 'balanced' %}selected{% endif %}>Equilibrado</option>
+          <option value="quiet" {% if world.gamification == 'quiet' %}selected{% endif %}>Tranquilo</option>
+        </select>
+      </label>
+      <label class="field">Puestos activos (WIP)
+        <input type="number" name="wip_limit" min="1" max="20" value="{{ world.wip_limit or 3 }}">
+      </label>
+      <label class="field">Modo de sesión
+        <select name="session_mode">
+          <option value="mixed" {% if world.session_mode == 'mixed' %}selected{% endif %}>Variado</option>
+          <option value="focus" {% if world.session_mode == 'focus' %}selected{% endif %}>Concentración</option>
+          <option value="light" {% if world.session_mode == 'light' %}selected{% endif %}>Ligero</option>
+        </select>
+      </label>
+    </div>
+    <label class="field"><input type="checkbox" name="xp_enabled" {% if world.xp_enabled %}checked{% endif %}> Otorgar XP</label>
+    <label class="field"><input type="checkbox" name="animations" {% if world.animations %}checked{% endif %}> Animaciones del mapa</label>
+    <p class="muted">Pausar un proyecto no destruye el edificio ni borra logros.</p>
+    <button class="btn solid mt-3" type="submit">Guardar</button>
+  </form>
+  <div class="panel mb-4">
+    <div class="kicker">Datos</div>
+    <p class="muted">Última copia correcta: {{ last_backup or "ninguna todavía" }}. Una copia en este disco no protege si el disco se pierde.</p>
+    <div class="row-actions">
+      <button class="btn" type="button" id="btn-backup">Hacer copia ahora</button>
+      <a class="btn" href="{{ url_for('evolve_api.backup_export') }}">Exportar JSON</a>
+      <a class="btn" href="{{ url_for('evolve_api.export_csv') }}?kind=missions">CSV misiones</a>
+      <a class="btn" href="{{ url_for('evolve_api.export_csv') }}?kind=money">CSV finanzas</a>
+    </div>
+    <form class="mt-3" method="post" action="{{ url_for('evolve_api.backup_restore') }}" enctype="multipart/form-data">
+      <label class="field">Restaurar copia .db (sustituye la base actual; se guarda un respaldo previo)
+        <input type="file" name="file" accept=".db,.json">
+      </label>
+      <button class="btn danger" type="submit">Restaurar</button>
+    </form>
+  </div>
+  <div class="panel">
+    <div class="kicker">Integraciones futuras</div>
+    <p class="muted">Ninguna está conectada. Solo existe la interfaz base para no improvisar después.</p>
+    <ul>
+      <li>GitHub / Git</li>
+      <li>Gmail (nunca envía solo)</li>
+      <li>Google Calendar</li>
+      <li>CRM</li>
+      <li>Observabilidad / monitoreo</li>
+      <li>Prospectos / licitaciones / ventas</li>
+      <li>Dominios propios</li>
+    </ul>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+document.getElementById("btn-backup")?.addEventListener("click", () => {
+  fetch("/api/backup/snapshot", { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" }, body: "{}" })
+    .then((r) => r.json())
+    .then((d) => alert(d.ok ? "Copia creada: " + (d.last_ok || d.file) : (d.error || "Error")));
+});
+</script>
+{% endblock %}

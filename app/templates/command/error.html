@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}{{ code }}{% endblock %}
+{% block content %}
+<div class="page">
+  <div class="kicker">Error {{ code }}</div>
+  <h1>{{ message }}</h1>
+  <a class="btn" href="{{ url_for('main.map_view') }}">Volver al mapa</a>
+</div>
+{% endblock %}

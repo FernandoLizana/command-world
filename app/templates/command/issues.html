@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Problemas{% endblock %}
+{% block content %}
+<div class="page">
+  <div class="kicker">Alertas tácticas</div>
+  <h1>Problemas</h1>
+  <div class="panel">
+    {% for i in issues %}
+      <div class="event-item">
+        <b>{{ i.severity }}</b> · {{ i.project.name }} — {{ i.title }}
+        <div class="muted">{{ i.description }} · {{ i.status }}</div>
+      </div>
+    {% else %}
+      <p class="muted">Sin incidentes registrados.</p>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

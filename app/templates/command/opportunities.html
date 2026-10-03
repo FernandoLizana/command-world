@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Oportunidades{% endblock %}
+{% block content %}
+<div class="page">
+  <div class="kicker">Exploraciones comerciales</div>
+  <h1>Oportunidades</h1>
+  <div class="grid-cards">
+    {% for o in opportunities %}
+      <div class="city-card">
+        {% if o.is_demo %}<div class="muted" style="font-size:11px">DATO DEMO</div>{% endif %}
+        <div class="badge">{{ o.status }}</div>
+        <h3>{{ o.name }}</h3>
+        <div class="muted">{{ o.company }} · {{ o.contact_name }}</div>
+        <div class="meta-row mt-2">
+          <span>{{ o.estimated_value|clp }}</span>
+          <span>{{ o.probability }}%</span>
+          <span>{{ o.project.name }}</span>
+        </div>
+        {% if o.next_action %}<p class="mt-2">Siguiente: {{ o.next_action }}</p>{% endif %}
+        <label class="muted">Etapa
+          <select data-opp="{{ o.id }}" onchange="stageOpp({{ o.id }}, this.value)">
+            {% for st in ['LEAD','CONTACTED','TALK','PROPOSAL','NEGOTIATION','WON','LOST'] %}
+            <option value="{{ st }}" {% if o.status == st %}selected{% endif %}>{{ st }}</option>
+            {% endfor %}
+          </select>
+        </label>
+      </div>
+    {% else %}
+      <p class="muted">Sin territorios comerciales abiertos.</p>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+function stageOpp(id, status) {
+  const create = status === "WON" && confirm("¿Crear también una cuenta por cobrar? (si cancelas, Ganado no registra dinero)");
+  fetch("/api/opportunities/" + id + "/stage", {
+    method: "POST",
+    credentials: "same-origin",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ status, create_receivable: create }),
+  }).then(() => location.reload());
+}
+</script>
+{% endblock %}

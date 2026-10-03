@@ -1,0 +1,172 @@
+{% extends "base.html" %}
+{% block title %}{{ project.name }}{% endblock %}
+{% block content %}
+<div class="page">
+  <div class="d-flex justify-content-between flex-wrap gap-3">
+    <div>
+      <div class="kicker">{{ project.status_meta.dot }} {{ project.status_meta.label }}{% if project.is_demo %} · DEMO{% endif %}</div>
+      <h1>{{ project.name }}</h1>
+      <p class="muted">{{ project.description }}</p>
+    </div>
+    <div class="row-actions">
+      <a class="btn solid" href="{{ url_for('projects.city', slug=project.slug) }}">Entrar a la ciudad</a>
+      <a class="btn" href="{{ url_for('projects.edit', slug=project.slug) }}">Editar</a>
+      <a class="btn" href="{{ url_for('council.view', q='Prioriza ' + project.name) }}">Consejero</a>
+    </div>
+  </div>
+
+  <div class="grid-cards mb-4">
+    <div class="panel"><div class="kicker">Nivel</div><b>{{ project.level }}</b> {{ project.level_name }}<div class="muted">{{ project.xp }} XP</div></div>
+    <div class="panel"><div class="kicker">Salud</div><b>{{ project.health }}%</b></div>
+    <div class="panel"><div class="kicker">Momentum</div><b>{{ project.momentum }}%</b></div>
+    <div class="panel"><div class="kicker">Ingresos / mes</div><b>{{ project.monthly_revenue|clp }}</b><div class="muted">Potencial {{ project.potential_revenue|clp }}</div></div>
+    <div class="panel"><div class="kicker">Horas invertidas</div><b>{{ project.hours_invested }} h</b></div>
+    <div class="panel"><div class="kicker">Última actividad</div><b>{{ project.last_activity.strftime('%d %b %Y %H:%M') if project.last_activity else '—' }}</b></div>
+  </div>
+
+  <div class="row g-3">
+    <div class="col-lg-7">
+      <div class="panel mb-3">
+        <div class="kicker">Estadísticas</div>
+        {% for b in bars %}
+          <div class="metric">
+            <label>{{ b.label }} <span class="ascii-bar">{{ b.value|bar }} {{ b.value }}</span></label>
+            <div class="track {% if b.key == 'momentum' %}cyan{% elif b.value < 40 %}red{% else %}green{% endif %}"><i style="width:{{ b.value }}%"></i></div>
+          </div>
+        {% endfor %}
+        <canvas id="radar" height="180" class="mt-3"></canvas>
+      </div>
+
+      <div class="panel mb-3">
+        <div class="kicker">Evolución de nivel</div>
+        {% if requirements %}
+          <form method="post" action="{{ url_for('projects.level_up', slug=project.slug) }}" class="mb-2">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button class="btn solid" type="submit">Intentar evolucionar</button>
+          </form>
+          <ul class="obj">
+            {% for r in requirements %}
+              <li>
+                <form method="post" action="{{ url_for('projects.toggle_requirement', slug=project.slug, req_id=r.id) }}" class="d-inline">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <button class="btn ghost" type="submit">{% if r.completed %}✅{% else %}❌{% endif %} {{ r.description }}</button>
+                </form>
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <p class="muted">Sin requisitos definidos para el siguiente nivel.</p>
+        {% endif %}
+      </div>
+
+      <div class="kicker">Edificios</div>
+      <div class="buildings mb-4">
+        <div class="building"><h4>⚒ Taller</h4><p class="muted">Desarrollo · tech {{ project.technology_score }}</p></div>
+        <div class="building"><h4>💰 Mercado</h4><p class="muted">Ventas · {{ project.sales_score }} · {{ project.open_opportunities_count }} pistas</p></div>
+        <div class="building"><h4>🛡 Cuartel</h4><p class="muted">QA / estabilidad · {{ project.stability_score }}</p></div>
+        <div class="building"><h4>📣 Torre</h4><p class="muted">Marketing · {{ project.marketing_score }}</p></div>
+        <div class="building"><h4>🔬 Laboratorio</h4><p class="muted">Producto · {{ project.product_score }}</p></div>
+      </div>
+    </div>
+    <div class="col-lg-5">
+      <div class="panel mb-3">
+        <div class="kicker">Recomendación</div>
+        {% if advice and advice.ai_status == 'unavailable' %}
+          <div class="demo-banner">Consejero temporalmente no disponible</div>
+        {% endif %}
+        <p>{{ advice.summary if advice else '—' }}</p>
+      </div>
+      <div class="panel mb-3">
+        <div class="kicker">⚔ Misiones</div>
+        {% for m in missions %}
+          <div class="quest mb-2">
+            <b>{{ m.title }}</b>
+            <div class="muted">{{ m.type_meta.label }} · {{ m.status }} · {{ m.xp_reward }} XP · {{ m.progress }}%</div>
+            <ul class="obj">
+              {% for o in m.objectives %}
+                <li>{% if o.completed %}☑{% else %}☐{% endif %} {{ o.description }}</li>
+              {% endfor %}
+            </ul>
+            {% if m.status != 'DONE' %}
+            <form method="post" action="{{ url_for('missions.complete', mission_id=m.id) }}">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button class="btn" type="submit">Completar</button>
+            </form>
+            {% endif %}
+          </div>
+        {% else %}
+          <p class="muted">Sin misiones.</p>
+        {% endfor %}
+      </div>
+      <div class="panel mb-3">
+        <div class="kicker">Oportunidades</div>
+        {% for o in opportunities %}
+          <div class="event-item"><b>{{ o.name }}</b> · {{ o.company }} · {{ o.status }} · {{ o.estimated_value|clp }}</div>
+        {% else %}<p class="muted">Sin pistas comerciales.</p>{% endfor %}
+      </div>
+      <div class="panel mb-3">
+        <div class="kicker">Problemas</div>
+        {% for i in issues %}
+          <div class="event-item">{{ i.severity }} · {{ i.title }} <span class="muted">{{ i.status }}</span></div>
+        {% else %}<p class="muted">Sin problemas abiertos.</p>{% endfor %}
+      </div>
+      <div class="panel mb-3">
+        <div class="kicker">Meta principal (distinta del XP)</div>
+        {% for g in goals %}
+          <div class="event-item">
+            {% if g.is_primary %}<b>Principal</b> · {% endif %}{{ g.title }}
+            <div class="muted">{{ g.progress_label }} · {{ g.kind }} · {{ g.status }}</div>
+          </div>
+        {% else %}
+          <p class="muted">Sin meta definida. El nivel lúdico no cuenta como avance de negocio.</p>
+        {% endfor %}
+      </div>
+      <div class="panel mb-3">
+        <div class="kicker">Notas y decisiones</div>
+        {% for n in notes %}
+          <div class="event-item"><b>{{ n.title or n.kind }}</b><div class="muted">{{ n.body[:240] }}</div></div>
+        {% else %}<p class="muted">Sin notas. Úsalas para retomar el contexto.</p>{% endfor %}
+      </div>
+      <div class="panel mb-3">
+        <div class="kicker">Movimientos registrados</div>
+        <p class="muted">{{ money.disclaimer }}</p>
+        {% for cur, b in money.currencies.items() %}
+          <p>{{ cur }} cobrado {{ b.received }} · pagado {{ b.paid }} · por cobrar {{ b.receivable }}</p>
+        {% else %}
+          <p class="muted">Sin finanzas en este edificio.</p>
+        {% endfor %}
+      </div>
+      <div class="panel">
+        <div class="kicker">Eventos</div>
+        {% for e in events %}
+          <div class="event-item">{{ e.title }}<div class="when">{{ e.created_at.strftime('%d %b') }}</div></div>
+        {% else %}<p class="muted">Sin eventos.</p>{% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<script>
+const bars = {{ bars|tojson }};
+const radarKeys = ["product_score","technology_score","sales_score","marketing_score","finance_score","stability_score"];
+const subset = bars.filter(b => radarKeys.includes(b.key));
+new Chart(document.getElementById("radar"), {
+  type: "radar",
+  data: {
+    labels: subset.map(b => b.label),
+    datasets: [{
+      label: "{{ project.name }}",
+      data: subset.map(b => b.value),
+      borderColor: "{{ project.color_theme }}",
+      backgroundColor: "{{ project.color_theme }}33"
+    }]
+  },
+  options: {
+    plugins: { legend: { display: false } },
+    scales: { r: { min: 0, max: 100, ticks: { display: false }, grid: { color: "#243028" }, pointLabels: { color: "#a7b3a3" } } }
+  }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Proyectos{% endblock %}
+{% block content %}
+<div class="page">
+  <div class="d-flex justify-content-between align-items-end flex-wrap gap-2">
+    <div>
+      <div class="kicker">Territorios</div>
+      <h1>Proyectos del imperio</h1>
+    </div>
+    <a class="btn solid" href="{{ url_for('projects.create_project') }}">Fundar ciudad</a>
+  </div>
+  <div class="row-actions mb-3">
+    <a class="btn {% if not filter_status %}solid{% endif %}" href="{{ url_for('projects.list_projects') }}">Todos</a>
+    {% for s in statuses %}
+      <a class="btn {% if filter_status == s %}solid{% endif %}" href="{{ url_for('projects.list_projects', status=s) }}">{{ status_meta[s].dot }} {{ status_meta[s].label }}</a>
+    {% endfor %}
+  </div>
+  <div class="grid-cards">
+    {% for p in projects %}
+    <a class="city-card" href="{{ url_for('projects.detail', slug=p.slug) }}" style="border-top:3px solid {{ p.color_theme }}">
+      {% if p.is_demo %}<div class="muted" style="font-size:11px">DATO DEMO</div>{% endif %}
+      <div class="badge" style="color:{{ p.status_meta.color }}">{{ p.status_meta.dot }} {{ p.status_meta.label }}</div>
+      <h3>{{ p.name }}</h3>
+      <div class="muted">{{ p.level_name }} · Nv. {{ p.level }} · {{ p.xp }} XP</div>
+      <div class="metric"><label>Salud <span>{{ p.health }}%</span></label><div class="track green"><i style="width:{{ p.health }}%"></i></div></div>
+      <div class="metric"><label>Momentum <span>{{ p.momentum }}%</span></label><div class="track cyan"><i style="width:{{ p.momentum }}%"></i></div></div>
+      <div class="meta-row mt-2">
+        <span>⚠ {{ p.open_issues_count }}</span>
+        <span>🎯 {{ p.open_opportunities_count }}</span>
+        <span>⚔ {{ p.open_missions_count }}</span>
+      </div>
+    </a>
+    {% else %}
+      <p class="muted">No hay territorios. Funda el primero.</p>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

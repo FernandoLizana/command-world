@@ -1,0 +1,9 @@
+from app.routes.api import bp as api_bp
+from app.routes.auth import bp as auth_bp
+from app.routes.council import bp as council_bp
+from app.routes.main import bp as main_bp
+from app.routes.missions import bp as missions_bp
+from app.routes.ops import bp as ops_bp
+from app.routes.projects import bp as projects_bp
+from app.routes.settings import bp as settings_bp
+from app.routes.tech import bp as tech_bp

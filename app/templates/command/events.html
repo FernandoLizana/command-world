@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Eventos{% endblock %}
+{% block content %}
+<div class="page">
+  <div class="kicker">Crónica</div>
+  <h1>Eventos del imperio</h1>
+  <div class="panel">
+    {% for e in events %}
+      <div class="event-item">
+        <i class="fa-solid {{ e.icon }}"></i>
+        {% if e.project %}<b>{{ e.project.name }}</b> · {% endif %}{{ e.title }}
+        {% if e.is_demo %}<span class="muted"> DEMO</span>{% endif %}
+        <div class="muted">{{ e.description }}</div>
+        <div class="when">{{ e.created_at.strftime('%d %b %Y %H:%M') }}</div>
+      </div>
+    {% else %}
+      <p class="muted">El registro está en silencio.</p>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

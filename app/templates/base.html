@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}{{ app_codename }}{% endblock %} · {{ app_name }}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Rajdhani:wght@400;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/command.css') }}">
+  {% block head %}{% endblock %}
+</head>
+<body class="command-body{% if world %} world{% endif %}{% if world_prefs and world_prefs.get('gamification') == 'quiet' %} quiet{% endif %}">
+  <div class="command-shell">
+    <nav class="rail">
+      <div class="rail-brand" title="{{ app_name }}">DR</div>
+      <a href="{{ url_for('main.map_view') }}#mapa" class="{% if request.endpoint == 'main.map_view' %}active{% endif %}" data-overlay="mapa">
+        <i class="fa-solid fa-map"></i><span class="tip">Mapa</span>
+      </a>
+      <a href="{{ url_for('main.map_view') }}#misiones" data-overlay="misiones">
+        <i class="fa-solid fa-scroll"></i><span class="tip">Misiones</span>
+      </a>
+      <a href="{{ url_for('main.map_view') }}#ia" data-overlay="ia">
+        <i class="fa-solid fa-chess-king"></i><span class="tip">IA</span>
+      </a>
+      <a href="{{ url_for('main.map_view') }}#historial" data-overlay="historial">
+        <i class="fa-solid fa-book-open"></i><span class="tip">Historial</span>
+      </a>
+      <div style="flex:1"></div>
+      <div class="rail-more">
+        <button type="button" class="rail-gear" id="rail-gear" title="Más">
+          <i class="fa-solid fa-ellipsis"></i>
+        </button>
+        <div class="rail-menu" id="rail-menu" hidden>
+          <a href="{{ url_for('main.map_view') }}#tablero">Tablero</a>
+          <a href="{{ url_for('main.map_view') }}#bitacora">Bitácora</a>
+          <a href="{{ url_for('main.map_view') }}#lista">Lista</a>
+          <a href="{{ url_for('settings.view') }}">Ajustes</a>
+          <a href="{{ url_for('main.map_view') }}#finanzas">Finanzas</a>
+          <a href="{{ url_for('main.map_view') }}#revision">Revisión semanal</a>
+          <a href="{{ url_for('projects.list_projects') }}">Territorios</a>
+          <a href="{{ url_for('missions.list_missions') }}?full=1">Lista de misiones</a>
+          {% if hud %}
+          <form method="post" action="{{ url_for('main.end_turn') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit">Cerrar turno {{ hud.turn }}</button>
+          </form>
+          {% endif %}
+          <a href="{{ url_for('auth.logout') }}">Salir</a>
+        </div>
+      </div>
+    </nav>
+
+    {% if hud %}
+    <header class="hud hud-slim">
+      <div class="hud-title">{{ app_name|upper }}</div>
+      <div class="now-chip" id="now-chip">
+        <span>Ahora</span>
+        <b id="now-text">{% if hud.alerts %}{{ hud.alerts }} alerta{{ 's' if hud.alerts != 1 else '' }}{% else %}Observa el mapa{% endif %}</b>
+      </div>
+      <div class="hud-stats">
+        <button class="btn solid" type="button" id="btn-today" title="Mi turno de hoy">Hoy</button>
+        <button class="btn" type="button" id="btn-capture" title="Captura rápida (Ctrl+Shift+K)">Captura</button>
+        <a class="btn ghost" href="{{ url_for('main.map_view') }}#tablero">Tablero</a>
+        <div class="stat"><b>Nv. {{ hud.level }}</b><span>{{ hud.xp }} XP</span></div>
+        <div class="stat {% if hud.alerts %}alert{% endif %}" id="stat-inbox"><b>{{ hud.alerts }}</b><span>Alertas</span></div>
+      </div>
+    </header>
+    {% else %}
+    <header class="hud"><div class="hud-title">{{ app_name|upper }}</div></header>
+    {% endif %}
+
+    <main class="stage">
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          <div class="flash-wrap">
+            {% for cat, msg in messages %}
+              <div class="flash">{{ msg }}</div>
+            {% endfor %}
+          </div>
+        {% endif %}
+      {% endwith %}
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="{{ url_for('static', filename='js/command.js') }}"></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

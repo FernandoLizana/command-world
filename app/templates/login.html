@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Acceso · {{ app_name }}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Rajdhani:wght@400;600&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/command.css') }}">
+</head>
+<body>
+  <div class="login-wrap">
+    <div class="panel login-card">
+      <div class="kicker">Centro de mando</div>
+      <h1>{{ app_name }}</h1>
+      <p class="muted">{{ app_codename }} — el usuario gobierna.</p>
+      {% if demo_mode %}
+        <div class="demo-banner">Modo demo. Usuario <b>admin</b> / clave <b>admin</b></div>
+      {% endif %}
+      {% with messages = get_flashed_messages() %}
+        {% for msg in messages %}<div class="flash mb-2">{{ msg }}</div>{% endfor %}
+      {% endwith %}
+      <form method="post">
+        {{ form.hidden_tag() }}
+        <label class="field">{{ form.username.label }} {{ form.username() }}</label>
+        <label class="field mt-2">{{ form.password.label }} {{ form.password() }}</label>
+        <button class="btn solid mt-3 w-100" type="submit">Entrar</button>
+      </form>
+    </div>
+  </div>
+</body>
+</html>
